@@ -145,7 +145,7 @@ export default function Home() {
 
     const data = 
       inputs.map(input => ({
-        phone_number: input.phoneNumber,
+        phone: input.phoneNumber,
         name: input.name,
         task: input.task,
       }))
@@ -160,7 +160,8 @@ export default function Home() {
         body: JSON.stringify(data),
       });
 
-      const result = await res
+      const result = await res.text()
+      console.log('Result:', result); 
       setResponse(result);
     } catch (err) {
       setError('An error occurred. Please try again later.');
@@ -187,6 +188,29 @@ export default function Home() {
   }, [isLoading, joke]);
 
   return (
+    <>
+    {response ? (
+      <>
+      <div>
+        <Typography variant="h5" align="center" gutterBottom>
+          Response
+        </Typography>
+          <div 
+          style={{
+            fontSize: '16px',  
+            lineHeight: '1.5',  
+            padding: '20px',  
+            margin: '0 auto',  
+            maxWidth: '90%',    
+            wordBreak: 'break-word', 
+            overflow:'auto',
+            msOverflowStyle: 'none',
+            scrollbarWidth: 'none',
+          }}
+          dangerouslySetInnerHTML={{ __html: response }} />
+        </div>
+      </>
+    ) :
     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '90vh', padding: 2, }}>
       <Card sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', width: '100%', maxWidth: 1000, padding: 3, boxShadow: 3, height: '90vh', position: 'relative' }}>
         {isLoading ? (
@@ -196,15 +220,6 @@ export default function Home() {
               {joke}
             </Typography>
           </Box>
-        ) : response ? (
-          <>
-            <Typography variant="h5" align="center" gutterBottom>
-              Response
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-              <pre>{JSON.stringify(response)}</pre>
-            </Box>
-          </>
         ) : (
           <>
             <Typography variant="h5" align="center" gutterBottom>
@@ -273,6 +288,7 @@ export default function Home() {
           </>
         )}
       </Card>
-    </Box>
+    </Box>}
+    </>
   );
 }
