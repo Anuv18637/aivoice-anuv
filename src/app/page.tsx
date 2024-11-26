@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, ChangeEvent, FormEvent, useEffect } from 'react';
+import { useState, ChangeEvent, FormEvent, useEffect, useCallback } from 'react';
 import { Box, Card, TextField, Button, CircularProgress, Typography, Alert, IconButton } from '@mui/material';
 import PhoneInput from 'react-phone-number-input'; // Importing the PhoneInput component
 import 'react-phone-number-input/style.css';
@@ -11,7 +11,7 @@ import AddIcon from '@mui/icons-material/Add';
 export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [response, setResponse] = useState<any>();
+  const [response, setResponse] = useState<string>();
   const [joke, setJoke] = useState<string>('');
   const [inputs, setInputs] = useState([{ phoneNumber: '', name: '', task: '' }]);
 
@@ -115,20 +115,26 @@ export default function Home() {
 
 
   const handleInputChange = (index: number, field: 'phoneNumber' | 'name' | 'task', value: string) => {
-    const newInputs = [...inputs];
-    newInputs[index][field] = value;
-    setInputs(newInputs);
-  };
+    setInputs((prevInputs) => {
+      const newInputs = [...prevInputs];
+      newInputs[index][field] = value;
+      return newInputs;
+    });
+  }; 
 
   const handleAddRow = () => {
-    setInputs([...inputs, { phoneNumber: '', name: '', task: '' }]);
+    if (inputs[inputs.length - 1].phoneNumber && inputs[inputs.length - 1].task && inputs[inputs.length - 1].name) {
+      setInputs([...inputs, { phoneNumber: '', name: '', task: '' }]);
+    } else {
+      alert('Please fill the current row before adding a new one.');
+    }
   };
 
 
-  const getRandomJoke = () => {
+  const getRandomJoke = useCallback(() => {
     const randomIndex = Math.floor(Math.random() * jokes.length);
     return jokes[randomIndex];
-  };
+  }, [jokes]);
 
 
   const handleSubmit = async (e: FormEvent) => {
@@ -160,10 +166,15 @@ export default function Home() {
         body: JSON.stringify(data),
       });
 
+      if (!res.ok) {
+        throw new Error('Failed to process the request.');
+      }
+
       const result = await res.text()
       console.log('Result:', result); 
       setResponse(result);
     } catch (err) {
+      console.error('Error occurred:', err);
       setError('An error occurred. Please try again later.');
     } finally {
       setIsLoading(false);
@@ -178,14 +189,18 @@ export default function Home() {
         setJoke(getRandomJoke());
       }, 8000);
 
-      const utterance = new SpeechSynthesisUtterance(joke);
-      speechSynthesis.speak(utterance);
+      if (typeof speechSynthesis !== "undefined" && joke) {
+        const utterance = new SpeechSynthesisUtterance(joke);
+        speechSynthesis.speak(utterance);
+      }
     }
     return () => {
       clearInterval(jokeInterval);
-      speechSynthesis.cancel();
+      if (typeof speechSynthesis !== "undefined") {
+        speechSynthesis.cancel();
+      } 
     };
-  }, [isLoading, joke]);
+  }, [isLoading, joke,getRandomJoke]);
 
   return (
     <>
@@ -206,6 +221,7 @@ export default function Home() {
             overflow:'auto',
             msOverflowStyle: 'none',
             scrollbarWidth: 'none',
+            maxHeight: '100vh', 
           }}
           dangerouslySetInnerHTML={{ __html: response }} />
         </div>
@@ -281,7 +297,7 @@ export default function Home() {
             </form>
 
             {error && (
-              <Alert severity="error" sx={{ marginBottom: 2 }}>
+              <Alert severity="error" sx={{ marginBottom: 2 }} role="alert" aria-live="assertive">
                 {error}
               </Alert>
             )}
