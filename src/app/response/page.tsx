@@ -136,7 +136,7 @@ export default function Response() {
       setJoke(getRandomJoke());
 
       try {
-        const res = await fetch('http://ec2-54-245-183-42.us-west-2.compute.amazonaws.com:5000/process_call', {
+        const res = await fetch('https://ec2-54-245-183-42.us-west-2.compute.amazonaws.com:5000/process_call', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
